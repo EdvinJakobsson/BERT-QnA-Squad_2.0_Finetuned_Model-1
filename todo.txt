@@ -1,0 +1,3 @@
+change from many paragraphs to only one. think about looking through more paragraphs though.
+make while loop for asking more questions
+add exit command in loop

@@ -14,7 +14,7 @@ import math
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from tqdm import tqdm
 from termcolor import colored, cprint
-
+import time
 
 class SquadExample(object):
     """
@@ -507,15 +507,19 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     n_gpu = torch.cuda.device_count()
 
+    ### Loading Pretrained model for QnA
+    print("Loading BERT-model...\n\n")
+    config = BertConfig(args.config_file)
+    model = BertForQuestionAnswering(config)
+    model.load_state_dict(torch.load(model_path, map_location=torch.device("cpu")))
+    model.to(device)
+
+    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
+
     ### Reading paragraph
     f = open(para_file, "r")
     para = f.read()
     f.close()
-
-    ## Reading question
-    #     f = open(ques_file, 'r')
-    #     ques = f.read()
-    #     f.close()
 
     para_list = para.split("\n\n")
 
@@ -526,14 +530,13 @@ def main():
         splits = para.split("\nQuestions:")
         paragraphs["id"] = i
         paragraphs["text"] = splits[0].replace("Paragraph:", "").strip("\n")
-        paragraphs["ques"] = splits[1].lstrip("\n").split("\n")
+        print("Paragraph: \n", paragraphs["text"])
+        paragraphs["ques"] = [input("\n What is your question?\n")]
+        start = time.time()
         input_data.append(paragraphs)
         i += 1
     ## input_data is a list of dictionary which has a paragraph and questions
-
     examples = read_squad_examples(input_data)
-
-    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
 
     eval_features = convert_examples_to_features(
         examples=examples,
@@ -552,12 +555,6 @@ def main():
     )
     all_example_index = torch.arange(all_input_ids.size(0), dtype=torch.long)
 
-    ### Loading Pretrained model for QnA
-    config = BertConfig(args.config_file)
-    model = BertForQuestionAnswering(config)
-    model.load_state_dict(torch.load(model_path, map_location=torch.device("cpu")))
-    model.to(device)
-
     pred_data = TensorDataset(
         all_input_ids, all_input_mask, all_segment_ids, all_example_index
     )
@@ -566,7 +563,7 @@ def main():
     pred_dataloader = DataLoader(pred_data, sampler=pred_sampler, batch_size=9)
 
     predictions = []
-    for input_ids, input_mask, segment_ids, example_indices in tqdm(pred_dataloader):
+    for input_ids, input_mask, segment_ids, example_indices in pred_dataloader:
         input_ids = input_ids.to(device)
         input_mask = input_mask.to(device)
         segment_ids = segment_ids.to(device)
@@ -597,6 +594,16 @@ def main():
         output = predict(examples, features, all_results, args.max_answer_length)
         predictions.append(output)
 
+    prediction = colored(
+        predictions[math.floor(examples[0].unique_id / 12)][examples[0]],
+        "green",
+        attrs=["reverse"],
+    )
+    print(prediction, "\n")
+    print("Time: ", time.time() - start)
+
+
+"""
     ### For printing the results ####
     index = None
     for example in examples:
@@ -615,7 +622,8 @@ def main():
         )
         print(prediction)
         print("\n")
-
+"""
 
 if __name__ == "__main__":
     main()
+
