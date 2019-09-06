@@ -9,6 +9,8 @@ verify_ssl = true
 pytorch-pretrained-bert = "*"
 pandas = "*"
 termcolor = "*"
+numpy = "*"
+black = "*"
 
 [requires]
 python_version = "3.6"
