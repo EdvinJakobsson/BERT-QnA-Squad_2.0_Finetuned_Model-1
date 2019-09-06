@@ -1,8 +1,9 @@
 import sys
 
 def main():
-    text = input("say: ")
-    print("said: ", text)
+    while True:
+        if input() == "exit":
+            exit()
 
 
 if __name__ == "__main__":
