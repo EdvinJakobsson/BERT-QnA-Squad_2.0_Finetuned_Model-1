@@ -1,5 +1,6 @@
 import sys
 
+
 def main():
     while True:
         if input() == "exit":

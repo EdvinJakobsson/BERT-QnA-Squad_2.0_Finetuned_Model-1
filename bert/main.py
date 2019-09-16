@@ -12,9 +12,9 @@ from torch.utils.data import TensorDataset
 from pytorch_pretrained_bert.modeling import BertForQuestionAnswering, BertConfig
 import math
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-from tqdm import tqdm
 from termcolor import colored, cprint
 import time
+
 
 class SquadExample(object):
     """
@@ -516,17 +516,36 @@ def main():
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
 
+    while True:
+        print(
+            "Please specify paragraph: \n "
+            "1: Assisted Time Holdover \n "
+            "2: Semcon short version \n "
+            "3: Semcon long version"
+        )
+        choice = input()
+        if choice == "1":
+            break
+        elif choice == "2":
+            para_file = "bert/input/semcon_short.txt"
+            break
+        elif choice == "3":
+            para_file = "bert/input/semcon.txt"
+            break
+        else:
+            print("I did not understand that, please type in 1, 2 or 3. \n")
+
     ### Reading paragraph
     f = open(para_file, "r")
     para = f.read()
     f.close()
-    print("Paragraph: \n", para)
+    print("\nParagraph:\n", para)
 
     while True:
         input_data = []
         paragraphs = {}
         paragraphs["id"] = 1
-    #    paragraphs["text"] = splits[0].replace("Paragraph:", "").strip("\n")
+        #    paragraphs["text"] = splits[0].replace("Paragraph:", "").strip("\n")
         paragraphs["text"] = para
         paragraphs["ques"] = [input("\n What is your question?\n")]
         if paragraphs["ques"] == ["exit"]:
@@ -544,7 +563,9 @@ def main():
             max_query_length=args.max_query_length,
         )
 
-        all_input_ids = torch.tensor([f.input_ids for f in eval_features], dtype=torch.long)
+        all_input_ids = torch.tensor(
+            [f.input_ids for f in eval_features], dtype=torch.long
+        )
         all_input_mask = torch.tensor(
             [f.input_mask for f in eval_features], dtype=torch.long
         )
@@ -600,7 +621,6 @@ def main():
         print(prediction, "\n")
         print("Time: ", time.time() - start)
 
-
     """
         ### For printing the results ####
         index = None
@@ -622,6 +642,6 @@ def main():
             print("\n")
     """
 
+
 if __name__ == "__main__":
     main()
-
